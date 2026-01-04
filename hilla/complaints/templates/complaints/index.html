@@ -1,0 +1,22 @@
+<h1>Complaints</h1>
+
+<p><a href="{% url 'create' %}">Create complaint</a></p>
+
+<ul>
+  {% for c in items %}
+    <li>
+      <b>#{{ c.id }}</b> {{ c.title }}
+      — {{ c.category }}
+      — {{ c.priority }}
+      — {{ c.status }}
+      — {{ c.created_at }}
+
+      {% if c.admin_response %}
+        <br>
+        <i>Admin response:</i> {{ c.admin_response }}
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>No complaints yet</li>
+  {% endfor %}
+</ul>
