@@ -1,22 +1,67 @@
-<h1>Complaints</h1>
+{% extends "complaints/base.html" %}
 
-<p><a href="{% url 'create' %}">Create complaint</a></p>
+{% block title %}Tickets{% endblock %}
 
-<ul>
-  {% for c in items %}
-    <li>
-      <b>#{{ c.id }}</b> {{ c.title }}
-      — {{ c.category }}
-      — {{ c.priority }}
-      — {{ c.status }}
-      — {{ c.created_at }}
+{% block content %}
+<div class="card">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+    <div>
+      <h1 style="margin:0;">Tickets</h1>
+      <p class="small" style="margin:6px 0 0;">
+        All submitted questions/complaints are listed here.
+      </p>
+    </div>
 
-      {% if c.admin_response %}
-        <br>
-        <i>Admin response:</i> {{ c.admin_response }}
-      {% endif %}
-    </li>
-  {% empty %}
-    <li>No complaints yet</li>
+    <a href="{% url 'create' %}" style="text-decoration:none;">
+      <button type="button">Create new ticket</button>
+    </a>
+  </div>
+</div>
+
+{% if tickets %}
+  {% for t in tickets %}
+    <div class="card">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+        <div>
+          <h2 style="margin:0 0 8px;">
+            <a href="{% url 'ticket_detail' t.id %}" style="text-decoration:none;">
+              {{ t.subject }}
+            </a>
+          </h2>
+
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <span class="badge">{{ t.get_type_display }}</span>
+            <span class="badge">Priority: {{ t.get_priority_display }}</span>
+            <span class="badge">Status: {{ t.get_status_display }}</span>
+            <span class="badge">Category: {{ t.category.name }}</span>
+            {% if t.is_answered %}
+              <span class="badge">Answered</span>
+            {% else %}
+              <span class="badge">Waiting</span>
+            {% endif %}
+          </div>
+
+          <p class="small" style="margin:0;">
+            From: <b>{{ t.name }}</b> ({{ t.email }})<br>
+            Created: {{ t.created_at|date:"Y-m-d H:i" }}
+          </p>
+        </div>
+
+        <div style="white-space:nowrap;">
+          <a href="{% url 'ticket_detail' t.id %}">Open →</a>
+        </div>
+      </div>
+    </div>
   {% endfor %}
-</ul>
+{% else %}
+  <div class="card">
+    <h2 style="margin:0 0 8px;">No tickets yet</h2>
+    <p class="small" style="margin:0 0 12px;">
+      Create your first ticket to test the form and database.
+    </p>
+    <a href="{% url 'create' %}" style="text-decoration:none;">
+      <button type="button">Create ticket</button>
+    </a>
+  </div>
+{% endif %}
+{% endblock %}

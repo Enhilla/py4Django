@@ -1,0 +1,17 @@
+{% extends "complaints/base.html" %}
+
+{% block content %}
+<h1>{{ ticket.subject }}</h1>
+
+<p><b>Type:</b> {{ ticket.get_type_display }}</p>
+<p><b>Message:</b></p>
+<p>{{ ticket.message }}</p>
+
+{% if ticket.answer %}
+<hr>
+<p><b>Answer:</b></p>
+<p>{{ ticket.answer }}</p>
+{% endif %}
+
+<a href="{% url 'index' %}">Back</a>
+{% endblock %}

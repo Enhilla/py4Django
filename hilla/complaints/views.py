@@ -1,34 +1,54 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Complaint
-from .forms import ComplaintForm
+from django.contrib import messages
+
+from .models import Ticket, Category
+from .forms import TicketForm
+
+# DRF
+from rest_framework import generics
+from .serializers import TicketSerializer
 
 
 def index(request):
-    # list all complaints (newest first)
-    items = Complaint.objects.order_by("-created_at")
-    return render(request, "complaints/index.html", {"items": items})
+    tickets = Ticket.objects.select_related("category").all()
+    return render(request, "complaints/index.html", {"tickets": tickets})
 
 
 def create(request):
-    # complaint submission page
     if request.method == "POST":
-        form = ComplaintForm(request.POST)
+        form = TicketForm(request.POST)
         if form.is_valid():
-            obj = form.save(commit=False)
-
-            # attach user if logged in
+            ticket = form.save(commit=False)
             if request.user.is_authenticated:
-                obj.user = request.user
-
-            obj.save()
-            return redirect("index")
+                ticket.user = request.user
+            ticket.save()
+            messages.success(request, "Ticket created successfully!")
+            return redirect("ticket_detail", pk=ticket.pk)
     else:
-        form = ComplaintForm()
+        form = TicketForm()
 
-    return render(request, "complaints/create.html", {"form": form})
+    return render(request, "complaints/support_form.html", {"form": form})
 
 
-def detail(request, pk: int):
-    # optional: detail page
-    c = get_object_or_404(Complaint, pk=pk)
-    return render(request, "complaints/detail.html", {"c": c})
+def ticket_detail(request, pk: int):
+    ticket = get_object_or_404(Ticket.objects.select_related("category"), pk=pk)
+    comments = ticket.comments.all()
+    return render(
+        request,
+        "complaints/ticket_detail.html",
+        {"ticket": ticket, "comments": comments},
+    )
+
+
+# ==========================
+# REST API (для Postman/curl)
+# ==========================
+
+class TicketListCreateAPI(generics.ListCreateAPIView):
+    queryset = Ticket.objects.all().order_by("-created_at")
+    serializer_class = TicketSerializer
+
+
+class TicketDetailAPI(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Ticket.objects.all()
+    serializer_class = TicketSerializer
