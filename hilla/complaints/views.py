@@ -52,3 +52,4 @@ class TicketListCreateAPI(generics.ListCreateAPIView):
 class TicketDetailAPI(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
+
