@@ -17,17 +17,14 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
 
 DEBUG = os.environ.get("DEBUG", "False").strip().lower() == "true"
 
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1"
-).split(",") if h.strip()]
-
-ALLOWED_HOSTS = list(set(ALLOWED_HOSTS + ["py4django.onrender.com"]))
-
-
-# FORCE render domain (kills DisallowedHost forever)
-ALLOWED_HOSTS = ["*"]
-
+# ALLOWED_HOSTS from env + fallback (no spaces issues)
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1,py4django.onrender.com"
+    ).split(",")
+    if h.strip()
+]
 
 # --------------------
 # APPLICATIONS
