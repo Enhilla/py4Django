@@ -3,16 +3,16 @@ import os
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Q
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.management import call_command
 
 from .models import Ticket, Category
-from .forms import TicketForm, TicketRatingForm, AdminCreateForm, AvatarForm
+from .forms import TicketForm, TicketRatingForm, AdminCreateForm, AvatarForm, SignUpForm
 from users.models import Profile
 
 # DRF
@@ -20,8 +20,39 @@ from rest_framework import generics
 from .serializers import TicketSerializer
 
 
+def _is_staff_user(user):
+    return user.is_staff or user.is_superuser
+
+
 def index(request):
-    tickets = Ticket.objects.select_related("category").all()
+    status = (request.GET.get("status") or "").strip().lower()
+    priority = (request.GET.get("priority") or "").strip().lower()
+    category = (request.GET.get("category") or "").strip().lower()
+    sort = (request.GET.get("sort") or "newest").strip().lower()
+
+    tickets = Ticket.objects.select_related("category").annotate(
+        avg_rating=Coalesce(Avg("ratings__score"), 0.0)
+    )
+
+    if status in {Ticket.OPEN, Ticket.IN_PROGRESS, Ticket.CLOSED}:
+        tickets = tickets.filter(status=status)
+    if priority in {Ticket.LOW, Ticket.MEDIUM, Ticket.HIGH}:
+        tickets = tickets.filter(priority=priority)
+    if category:
+        tickets = tickets.filter(category__slug=category)
+
+    if sort == "oldest":
+        tickets = tickets.order_by("created_at")
+    elif sort == "rating_desc":
+        tickets = tickets.order_by("-avg_rating", "-created_at")
+    elif sort == "rating_asc":
+        tickets = tickets.order_by("avg_rating", "-created_at")
+    else:
+        sort = "newest"
+        tickets = tickets.order_by("-created_at")
+
+    categories = Category.objects.order_by("name")
+
     stats = {
         "total": Ticket.objects.count(),
         "open": Ticket.objects.filter(status=Ticket.OPEN).count(),
@@ -32,25 +63,53 @@ def index(request):
     return render(
         request,
         "complaints/index.html",
-        {"tickets": tickets, "stats": stats, "recent": recent},
+        {
+            "tickets": tickets,
+            "stats": stats,
+            "recent": recent,
+            "categories": categories,
+            "filters": {
+                "status": status,
+                "priority": priority,
+                "category": category,
+                "sort": sort,
+            },
+        },
     )
 
 
+@login_required
 def create(request):
     if request.method == "POST":
-        form = TicketForm(request.POST)
+        form = TicketForm(request.POST, user=request.user)
         if form.is_valid():
             ticket = form.save(commit=False)
             if request.user.is_authenticated:
                 ticket.user = request.user
+                if not ticket.name:
+                    ticket.name = request.user.get_full_name() or request.user.username
+                if not ticket.email:
+                    ticket.email = request.user.email or ""
             if ticket.is_anonymous:
                 ticket.name = ""
                 ticket.email = ""
             ticket.save()
             messages.success(request, "Ticket created successfully!")
             return redirect("ticket_detail", pk=ticket.pk)
+        first_error = ""
+        if form.errors:
+            errors = form.non_field_errors() or []
+            if not errors:
+                first_field = next(iter(form.errors))
+                errors = form.errors.get(first_field) or []
+            if errors:
+                first_error = str(errors[0])
+        messages.error(
+            request,
+            f"Ticket was not sent. {first_error}" if first_error else "Ticket was not sent. Please fix the form errors.",
+        )
     else:
-        form = TicketForm()
+        form = TicketForm(user=request.user)
 
     return render(request, "complaints/support_form.html", {"form": form})
 
@@ -160,18 +219,91 @@ def seed_demo_view(request):
     return render(request, "complaints/seed_demo.html")
 
 
+@login_required
+@user_passes_test(_is_staff_user)
+def admin_queue(request):
+    status = (request.GET.get("status") or "").strip().lower()
+    priority = (request.GET.get("priority") or "").strip().lower()
+    category = (request.GET.get("category") or "").strip().lower()
+    sort = (request.GET.get("sort") or "newest").strip().lower()
+    q = (request.GET.get("q") or "").strip()
+
+    tickets = (
+        Ticket.objects.select_related("category", "user")
+        .annotate(avg_rating=Coalesce(Avg("ratings__score"), 0.0))
+        .annotate(rating_count=Count("ratings"))
+    )
+
+    if status in {Ticket.OPEN, Ticket.IN_PROGRESS, Ticket.CLOSED}:
+        tickets = tickets.filter(status=status)
+    if priority in {Ticket.LOW, Ticket.MEDIUM, Ticket.HIGH}:
+        tickets = tickets.filter(priority=priority)
+    if category:
+        tickets = tickets.filter(category__slug=category)
+    if q:
+        tickets = tickets.filter(Q(subject__icontains=q) | Q(message__icontains=q))
+
+    if sort == "oldest":
+        tickets = tickets.order_by("created_at")
+    elif sort == "rating_desc":
+        tickets = tickets.order_by("-avg_rating", "-created_at")
+    elif sort == "rating_asc":
+        tickets = tickets.order_by("avg_rating", "-created_at")
+    elif sort == "priority_desc":
+        tickets = tickets.order_by("-priority", "-created_at")
+    else:
+        sort = "newest"
+        tickets = tickets.order_by("-created_at")
+
+    categories = Category.objects.order_by("name")
+    return render(
+        request,
+        "complaints/admin_queue.html",
+        {
+            "tickets": tickets,
+            "categories": categories,
+            "filters": {
+                "status": status,
+                "priority": priority,
+                "category": category,
+                "sort": sort,
+                "q": q,
+            },
+        },
+    )
+
+
+@login_required
+@user_passes_test(_is_staff_user)
+def admin_ticket_status(request, pk: int):
+    if request.method != "POST":
+        return redirect("admin_queue")
+
+    ticket = get_object_or_404(Ticket, pk=pk)
+    next_url = request.POST.get("next") or "admin_queue"
+    new_status = (request.POST.get("status") or "").strip().lower()
+    if new_status not in {Ticket.OPEN, Ticket.IN_PROGRESS, Ticket.CLOSED}:
+        messages.error(request, "Invalid status.")
+        return redirect(next_url)
+
+    ticket.status = new_status
+    ticket.save(update_fields=["status", "updated_at"])
+    messages.success(request, f"Ticket #{ticket.id} status changed to {ticket.get_status_display()}.")
+    return redirect(next_url)
+
+
 def signup(request):
     if request.user.is_authenticated:
         return redirect("index")
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             messages.success(request, "Account created.")
             return redirect("index")
     else:
-        form = UserCreationForm()
+        form = SignUpForm()
     return render(request, "registration/signup.html", {"form": form})
 
 

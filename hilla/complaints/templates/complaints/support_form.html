@@ -11,7 +11,15 @@
 <div class="card">
   <form method="post" class="form-grid">
       {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-errors">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
       {{ form.as_p }}
+      {% if form.errors %}
+        <p class="small error-hint">Please review highlighted fields and submit again.</p>
+      {% endif %}
       <p class="small">If you select anonymous, your name and email will be hidden.</p>
       <button type="submit" class="btn primary">Submit request</button>
   </form>

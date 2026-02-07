@@ -134,6 +134,28 @@ body.theme {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.user-dropdown form {
+  margin: 0;
+}
+
+.logout-link {
+  width: 100%;
+  display: block;
+  text-align: left;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  margin: 0;
+}
+
+.logout-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
@@ -386,6 +408,55 @@ body.theme {
   border-bottom: none;
 }
 
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 12px 0 4px;
+  align-items: end;
+}
+
+.filters label {
+  margin: 0 0 4px;
+  font-size: 12px;
+}
+
+.filters select {
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-actions .btn {
+  margin-top: 0;
+  padding: 8px 12px;
+}
+
+.moderation-row {
+  align-items: start;
+}
+
+.status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-actions form {
+  margin: 0;
+}
+
+.status-actions .btn {
+  margin-top: 0;
+  width: 100%;
+}
+
 .ticket-title a {
   color: #ffffff;
   text-decoration: none;
@@ -502,6 +573,20 @@ button.primary {
   color: #ffffff;
 }
 
+.user-dropdown .logout-link {
+  width: 100%;
+  display: block;
+  text-align: left;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  margin: 0;
+}
+
 .card.highlight .btn.ghost {
   background: rgba(15, 22, 26, 0.9);
   color: #f5c76a;
@@ -547,6 +632,27 @@ button.primary {
   border-radius: 12px;
   margin: 8px 0;
   animation: pop 0.5s ease;
+}
+
+.message.error {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.45);
+  color: #ffdede;
+}
+
+.errorlist,
+.form-errors .errorlist {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  list-style: none;
+  background: rgba(255, 107, 107, 0.2);
+  border: 1px solid rgba(255, 107, 107, 0.45);
+  color: #ffdede;
+}
+
+.error-hint {
+  color: #ffdede;
 }
 
 .toast {
@@ -835,8 +941,46 @@ body.modal-open {
   margin-top: 8px;
 }
 
+.page-transition-target {
+  animation: page-enter 0.28s ease;
+}
+
+body.page-leaving .page-transition-target {
+  animation: page-leave 0.18s ease forwards;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 @media (max-width: 700px) {
   .footer-grid {
     grid-template-columns: 1fr;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .status-actions {
+    width: 100%;
   }
 }

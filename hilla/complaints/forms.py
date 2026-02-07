@@ -1,5 +1,7 @@
 from django import forms
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
 
 from .models import Ticket, TicketComment, TicketRating
 
@@ -37,15 +39,20 @@ class TicketForm(forms.ModelForm):
             "message": forms.Textarea(attrs={"rows": 6}),
         }
 
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
     def clean(self):
         cleaned = super().clean()
         if cleaned.get("is_anonymous"):
             cleaned["name"] = ""
             cleaned["email"] = ""
         else:
-            if not cleaned.get("name"):
+            is_auth_user = bool(getattr(self.user, "is_authenticated", False))
+            if not cleaned.get("name") and not is_auth_user:
                 self.add_error("name", "Name is required unless anonymous.")
-            if not cleaned.get("email"):
+            if not cleaned.get("email") and not is_auth_user:
                 self.add_error("email", "Email is required unless anonymous.")
         return cleaned
 
@@ -86,3 +93,20 @@ class AdminCreateForm(forms.Form):
 
 class AvatarForm(forms.Form):
     avatar = forms.ImageField(required=True)
+
+
+class SignUpForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    first_name = forms.CharField(max_length=150, required=False)
+    last_name = forms.CharField(max_length=150, required=False)
+
+    class Meta(UserCreationForm.Meta):
+        model = get_user_model()
+        fields = ("username", "email", "first_name", "last_name", "password1", "password2")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        User = get_user_model()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("This email is already registered.")
+        return email

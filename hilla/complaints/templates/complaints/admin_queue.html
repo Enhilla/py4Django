@@ -1,0 +1,116 @@
+{% extends "complaints/base.html" %}
+
+{% block title %}Moderation{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Moderation Queue</h1>
+    <p class="small">Filter tickets and change statuses in one click.</p>
+  </div>
+</section>
+
+<section class="card">
+  <form method="get" class="filters">
+    <div>
+      <label for="statusFilter">Status</label>
+      <select id="statusFilter" name="status">
+        <option value="" {% if not filters.status %}selected{% endif %}>All</option>
+        <option value="open" {% if filters.status == "open" %}selected{% endif %}>Open</option>
+        <option value="in_progress" {% if filters.status == "in_progress" %}selected{% endif %}>In progress</option>
+        <option value="closed" {% if filters.status == "closed" %}selected{% endif %}>Closed</option>
+      </select>
+    </div>
+    <div>
+      <label for="priorityFilter">Priority</label>
+      <select id="priorityFilter" name="priority">
+        <option value="" {% if not filters.priority %}selected{% endif %}>All</option>
+        <option value="low" {% if filters.priority == "low" %}selected{% endif %}>Low</option>
+        <option value="medium" {% if filters.priority == "medium" %}selected{% endif %}>Medium</option>
+        <option value="high" {% if filters.priority == "high" %}selected{% endif %}>High</option>
+      </select>
+    </div>
+    <div>
+      <label for="categoryFilter">Category</label>
+      <select id="categoryFilter" name="category">
+        <option value="" {% if not filters.category %}selected{% endif %}>All</option>
+        {% for c in categories %}
+          <option value="{{ c.slug }}" {% if filters.category == c.slug %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="sortFilter">Sort</label>
+      <select id="sortFilter" name="sort">
+        <option value="newest" {% if filters.sort == "newest" %}selected{% endif %}>Newest first</option>
+        <option value="oldest" {% if filters.sort == "oldest" %}selected{% endif %}>Oldest first</option>
+        <option value="rating_desc" {% if filters.sort == "rating_desc" %}selected{% endif %}>Rating high to low</option>
+        <option value="rating_asc" {% if filters.sort == "rating_asc" %}selected{% endif %}>Rating low to high</option>
+        <option value="priority_desc" {% if filters.sort == "priority_desc" %}selected{% endif %}>Priority</option>
+      </select>
+    </div>
+    <div>
+      <label for="queryFilter">Search</label>
+      <input id="queryFilter" type="text" name="q" value="{{ filters.q }}" placeholder="subject or message">
+    </div>
+    <div class="filter-actions">
+      <button type="submit" class="btn ghost">Apply</button>
+      <a href="{% url 'admin_queue' %}" class="btn ghost">Reset</a>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-title">Tickets</div>
+  {% if tickets %}
+    {% for t in tickets %}
+      <div class="ticket-row moderation-row">
+        <div>
+          <div class="ticket-title">
+            <a href="{% url 'ticket_detail' t.id %}">#{{ t.id }} · {{ t.subject }}</a>
+          </div>
+          <div class="meta">
+            <span class="pill status {{ t.status }}">{{ t.get_status_display }}</span>
+            <span class="pill priority">{{ t.get_priority_display }}</span>
+            <span class="pill category">{{ t.category.name }}</span>
+          </div>
+          <div class="small">
+            Reporter:
+            {% if t.is_anonymous %}
+              Anonymous
+            {% elif t.user %}
+              {{ t.user.username }}
+            {% else %}
+              {{ t.name|default:"-" }}
+            {% endif %}
+            · {{ t.created_at|date:"Y-m-d H:i" }}
+          </div>
+          <div class="small">Rating: {{ t.avg_rating|floatformat:1 }}/5 ({{ t.rating_count }})</div>
+        </div>
+        <div class="status-actions">
+          <form method="post" action="{% url 'admin_ticket_status' t.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <input type="hidden" name="status" value="open">
+            <button type="submit" class="btn ghost">Open</button>
+          </form>
+          <form method="post" action="{% url 'admin_ticket_status' t.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <input type="hidden" name="status" value="in_progress">
+            <button type="submit" class="btn ghost">In progress</button>
+          </form>
+          <form method="post" action="{% url 'admin_ticket_status' t.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <input type="hidden" name="status" value="closed">
+            <button type="submit" class="btn primary">Close</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="small">No tickets found for current filters.</p>
+  {% endif %}
+</section>
+{% endblock %}

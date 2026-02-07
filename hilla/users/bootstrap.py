@@ -9,6 +9,9 @@ def _truthy(value: str) -> bool:
 DEFAULT_ADMIN_USERNAME = "admin"
 DEFAULT_ADMIN_PASSWORD = "admin12345"
 DEFAULT_ADMIN_EMAIL = "admin@example.com"
+DEFAULT_USER_USERNAME = "user"
+DEFAULT_USER_PASSWORD = "user12345"
+DEFAULT_USER_EMAIL = "user@example.com"
 
 
 def _should_run() -> bool:
@@ -57,6 +60,49 @@ def ensure_default_admin() -> None:
             return
 
         User.objects.create_superuser(
+            username=username,
+            email=email or "",
+            password=password,
+        )
+    except (OperationalError, ProgrammingError):
+        return
+
+
+def ensure_default_user() -> None:
+    if not _should_run():
+        return
+
+    username = DEFAULT_USER_USERNAME
+    password = DEFAULT_USER_PASSWORD
+    email = DEFAULT_USER_EMAIL
+
+    try:
+        from django.contrib.auth import get_user_model
+        from django.db.utils import OperationalError, ProgrammingError
+    except Exception:
+        return
+
+    try:
+        User = get_user_model()
+        existing = User.objects.filter(username=username).first()
+        if existing:
+            changed = False
+            if existing.is_staff:
+                existing.is_staff = False
+                changed = True
+            if existing.is_superuser:
+                existing.is_superuser = False
+                changed = True
+            if email and not existing.email:
+                existing.email = email
+                changed = True
+            existing.set_password(password)
+            changed = True
+            if changed:
+                existing.save(update_fields=["is_staff", "is_superuser", "email", "password"])
+            return
+
+        User.objects.create_user(
             username=username,
             email=email or "",
             password=password,

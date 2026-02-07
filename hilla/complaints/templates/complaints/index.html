@@ -69,6 +69,48 @@
   <div class="card">
     <div class="card-title">Latest Requests</div>
     <p class="small">Track real updates by status.</p>
+    <form method="get" class="filters">
+      <div>
+        <label for="statusFilter">Status</label>
+        <select id="statusFilter" name="status">
+          <option value="" {% if not filters.status %}selected{% endif %}>All</option>
+          <option value="open" {% if filters.status == "open" %}selected{% endif %}>Open</option>
+          <option value="in_progress" {% if filters.status == "in_progress" %}selected{% endif %}>In progress</option>
+          <option value="closed" {% if filters.status == "closed" %}selected{% endif %}>Closed</option>
+        </select>
+      </div>
+      <div>
+        <label for="priorityFilter">Priority</label>
+        <select id="priorityFilter" name="priority">
+          <option value="" {% if not filters.priority %}selected{% endif %}>All</option>
+          <option value="low" {% if filters.priority == "low" %}selected{% endif %}>Low</option>
+          <option value="medium" {% if filters.priority == "medium" %}selected{% endif %}>Medium</option>
+          <option value="high" {% if filters.priority == "high" %}selected{% endif %}>High</option>
+        </select>
+      </div>
+      <div>
+        <label for="categoryFilter">Category</label>
+        <select id="categoryFilter" name="category">
+          <option value="" {% if not filters.category %}selected{% endif %}>All</option>
+          {% for c in categories %}
+            <option value="{{ c.slug }}" {% if filters.category == c.slug %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="sortFilter">Sort</label>
+        <select id="sortFilter" name="sort">
+          <option value="newest" {% if filters.sort == "newest" %}selected{% endif %}>Newest first</option>
+          <option value="oldest" {% if filters.sort == "oldest" %}selected{% endif %}>Oldest first</option>
+          <option value="rating_desc" {% if filters.sort == "rating_desc" %}selected{% endif %}>Rating high to low</option>
+          <option value="rating_asc" {% if filters.sort == "rating_asc" %}selected{% endif %}>Rating low to high</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="btn ghost">Apply</button>
+        <a href="{% url 'index' %}" class="btn ghost">Reset</a>
+      </div>
+    </form>
     {% if tickets %}
       {% for t in tickets %}
         <div class="ticket-row">
@@ -85,6 +127,7 @@
             <div class="small">
               From {% if t.is_anonymous %}Anonymous{% else %}{{ t.name }}{% endif %} · {{ t.created_at|date:"Y-m-d H:i" }}
             </div>
+            <div class="small">Rating: {{ t.avg_rating|floatformat:1 }}/5</div>
           </div>
           <a class="arrow" href="{% url 'ticket_detail' t.id %}">Open →</a>
         </div>

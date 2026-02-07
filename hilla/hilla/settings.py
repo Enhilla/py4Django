@@ -4,11 +4,16 @@ Django settings for hilla project.
 
 from pathlib import Path
 import os
+import sys
 
 try:
     from dotenv import load_dotenv
 except Exception:
     load_dotenv = None
+
+
+def _truthy(value: str) -> bool:
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
 
 # --------------------
 # BASE DIR
@@ -39,11 +44,20 @@ ALLOWED_HOSTS = [
 # --------------------
 RECAPTCHA_PUBLIC_KEY = os.environ.get("RECAPTCHA_PUBLIC_KEY", "")
 RECAPTCHA_PRIVATE_KEY = os.environ.get("RECAPTCHA_PRIVATE_KEY", "")
+_recaptcha_default = "false" if DEBUG else "true"
 ENABLE_RECAPTCHA = (
-    os.environ.get("ENABLE_RECAPTCHA", "true").strip().lower() == "true"
+    _truthy(os.environ.get("ENABLE_RECAPTCHA", _recaptcha_default))
     and bool(RECAPTCHA_PUBLIC_KEY)
     and bool(RECAPTCHA_PRIVATE_KEY)
 )
+
+# Local dev: keep captcha enabled but use Google's official test keys by default.
+# This avoids host/domain verification failures on localhost.
+if DEBUG and _truthy(os.environ.get("USE_RECAPTCHA_TEST_KEYS", "true")):
+    RECAPTCHA_PUBLIC_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+    RECAPTCHA_PRIVATE_KEY = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+    ENABLE_RECAPTCHA = _truthy(os.environ.get("ENABLE_RECAPTCHA", "true"))
+    SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 # --------------------
 # APPLICATIONS
@@ -113,9 +127,26 @@ try:
 except Exception:
     dj_database_url = None
 
-if dj_database_url and os.environ.get("DATABASE_URL"):
+db_url = os.environ.get("DATABASE_URL", "").strip()
+force_sqlite = _truthy(os.environ.get("FORCE_SQLITE", "false"))
+use_remote_db = _truthy(os.environ.get("USE_REMOTE_DB", "false"))
+is_render = bool(os.environ.get("RENDER"))
+is_runserver = any(arg == "runserver" for arg in sys.argv[1:])
+
+# Strategy:
+# - local runserver => SQLite by default
+# - production / Render => remote DATABASE_URL
+# - explicit USE_REMOTE_DB=true => remote DATABASE_URL
+should_use_remote_db = (
+    not force_sqlite
+    and bool(dj_database_url)
+    and bool(db_url)
+    and (use_remote_db or is_render or (not DEBUG and not is_runserver))
+)
+
+if should_use_remote_db:
     DATABASES = {
-        "default": dj_database_url.config(conn_max_age=600, ssl_require=True),
+        "default": dj_database_url.config(default=db_url, conn_max_age=600, ssl_require=True),
     }
 else:
     DATABASES = {
@@ -170,5 +201,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --------------------
 # AUTH
 # --------------------
+LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
