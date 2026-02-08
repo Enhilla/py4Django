@@ -1,0 +1,21 @@
+{% extends "complaints/base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Login</h1>
+    <p class="small">Access your account to manage tickets.</p>
+  </div>
+</section>
+
+<div class="card">
+  <form method="post" class="form-grid">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn primary">Login</button>
+  </form>
+  <p class="small">No account? <a href="{% url 'signup' %}">Sign up</a></p>
+</div>
+{% endblock %}

@@ -2,12 +2,14 @@ import json
 import os
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, login
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Avg
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
+from django.core.management import call_command
 
 from .models import Ticket, Category
 from .forms import TicketForm, TicketRatingForm, AdminCreateForm
@@ -144,6 +146,32 @@ def create_admin(request):
     else:
         form = AdminCreateForm()
     return render(request, "complaints/create_admin.html", {"form": form})
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def seed_demo_view(request):
+    if request.method == "POST":
+        count = int(request.POST.get("count", "8") or "8")
+        call_command("seed_demo", count=count)
+        messages.success(request, f"Seeded {count} demo tickets.")
+        return redirect("seed_demo")
+    return render(request, "complaints/seed_demo.html")
+
+
+def signup(request):
+    if request.user.is_authenticated:
+        return redirect("index")
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Account created.")
+            return redirect("index")
+    else:
+        form = UserCreationForm()
+    return render(request, "registration/signup.html", {"form": form})
 
 
 # ==========================
