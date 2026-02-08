@@ -10,3 +10,5 @@ openai
 python-dotenv
 google-genai
 django-recaptcha
+dj-database-url
+psycopg[binary]
