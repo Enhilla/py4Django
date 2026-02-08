@@ -138,7 +138,13 @@ USE_TZ = True
 # --------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    }
+}
+# Allow WhiteNoise to serve from app static dirs if collectstatic output is stale.
+WHITENOISE_USE_FINDERS = True
 
 # --------------------
 # DEFAULT PK
