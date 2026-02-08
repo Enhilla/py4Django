@@ -1,7 +1,9 @@
 {% extends "complaints/base.html" %}
 
 {% block content %}
-<h1>Success</h1>
-<p>Your ticket has been submitted.</p>
-<a href="{% url 'index' %}">Back to list</a>
+<div class="card">
+  <h1>Success</h1>
+  <p class="small">Your request has been submitted.</p>
+  <a href="{% url 'index' %}" class="btn ghost">Back to list</a>
+</div>
 {% endblock %}

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
     # local
     "complaints",
+    "users.apps.UsersConfig",
 ]
 
 # --------------------

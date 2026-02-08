@@ -3,65 +3,200 @@
 {% block title %}Tickets{% endblock %}
 
 {% block content %}
-<div class="card">
-  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-    <div>
-      <h1 style="margin:0;">Tickets</h1>
-      <p class="small" style="margin:6px 0 0;">
-        All submitted questions/complaints are listed here.
-      </p>
+<section class="hero">
+  <div class="hero-content">
+    <p class="eyebrow">Report • Track • Resolve</p>
+    <h1>Fix issues fast with a clean public tracker.</h1>
+    <p class="lead">
+      Inspired by civic reporting flows, this portal helps students report problems
+      and follow progress in one place.
+    </p>
+    <div class="hero-actions">
+      <a href="{% url 'create' %}" class="btn primary">Create request</a>
+      <button type="button" class="btn ghost" data-modal-open="modal-guide">How it works</button>
     </div>
-
-    <a href="{% url 'create' %}" style="text-decoration:none;">
-      <button type="button">Create new ticket</button>
-    </a>
   </div>
-</div>
-
-{% if tickets %}
-  {% for t in tickets %}
-    <div class="card">
-      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
-        <div>
-          <h2 style="margin:0 0 8px;">
-            <a href="{% url 'ticket_detail' t.id %}" style="text-decoration:none;">
-              {{ t.subject }}
-            </a>
-          </h2>
-
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-            <span class="badge">{{ t.get_type_display }}</span>
-            <span class="badge">Priority: {{ t.get_priority_display }}</span>
-            <span class="badge">Status: {{ t.get_status_display }}</span>
-            <span class="badge">Category: {{ t.category.name }}</span>
-            {% if t.is_answered %}
-              <span class="badge">Answered</span>
-            {% else %}
-              <span class="badge">Waiting</span>
-            {% endif %}
-          </div>
-
-          <p class="small" style="margin:0;">
-            From: <b>{{ t.name }}</b> ({{ t.email }})<br>
-            Created: {{ t.created_at|date:"Y-m-d H:i" }}
-          </p>
+  <div class="hero-panel card glass">
+    <div class="stat-grid">
+      <div class="stat">
+        <span class="stat-label">Total</span>
+        <span class="stat-value">{{ stats.total }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Open</span>
+        <span class="stat-value">{{ stats.open }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">In progress</span>
+        <span class="stat-value">{{ stats.in_progress }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Closed</span>
+        <span class="stat-value">{{ stats.closed }}</span>
+      </div>
+    </div>
+    <div class="mini-news">
+      <div class="mini-title">News & updates</div>
+      {% for item in recent %}
+        <div class="mini-item">
+          <span class="dot"></span>
+          <span>{{ item.subject|truncatechars:40 }}</span>
+          <span class="mini-date">{{ item.created_at|date:"M d" }}</span>
         </div>
+      {% empty %}
+        <div class="mini-item">No updates yet. Create the first request.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
 
-        <div style="white-space:nowrap;">
-          <a href="{% url 'ticket_detail' t.id %}">Open →</a>
+<section class="grid">
+  <div class="card">
+    <div class="card-title">Prompt Helper</div>
+    <p class="small">Use a clean template to describe problems fast.</p>
+    <textarea id="promptBox" rows="6" placeholder="Your prompt will appear here..."></textarea>
+    <div class="chip-row">
+      <button type="button" class="chip" data-target="promptBox" data-prompt-template="Write a clear complaint about campus facilities: what happened, where it happened, when it happened, impact on students, and a suggested fix. Keep it under 120 words.">Complaint template</button>
+      <button type="button" class="chip" data-target="promptBox" data-prompt-template="Draft a polite request for maintenance: location, issue details, urgency, and contact info. End with a thank you.">Maintenance request</button>
+      <button type="button" class="chip" data-target="promptBox" data-prompt-template="Summarize a ticket for an admin: type, priority, status, key facts, and next action.">Admin summary</button>
+    </div>
+    <div class="hero-actions" style="margin-top:12px;">
+      <button type="button" class="btn ghost" data-modal-open="modal-ai">Open AI helper</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Latest Requests</div>
+    <p class="small">Track real updates by status.</p>
+    {% if tickets %}
+      {% for t in tickets %}
+        <div class="ticket-row">
+          <div>
+            <div class="ticket-title">
+              <a href="{% url 'ticket_detail' t.id %}">{{ t.subject }}</a>
+            </div>
+            <div class="meta">
+              <span class="pill type">{{ t.get_type_display }}</span>
+              <span class="pill priority">{{ t.get_priority_display }}</span>
+              <span class="pill status {{ t.status }}">{{ t.get_status_display }}</span>
+              <span class="pill category">{{ t.category.name }}</span>
+            </div>
+            <div class="small">
+              From {{ t.name }} · {{ t.created_at|date:"Y-m-d H:i" }}
+            </div>
+          </div>
+          <a class="arrow" href="{% url 'ticket_detail' t.id %}">Open →</a>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">
+        No tickets yet. Create your first request.
+      </div>
+      <a href="{% url 'create' %}" class="btn primary">Create request</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card highlight">
+    <div class="card-title">For citizens</div>
+    <p class="small">Report a problem in your area and track what happens after you submit.</p>
+    <button type="button" class="btn ghost" data-modal-open="modal-guide">Learn more</button>
+  </div>
+  <div class="card highlight">
+    <div class="card-title">For councils</div>
+    <p class="small">Understand the most common issues and collaborate on fixes faster.</p>
+    <button type="button" class="btn ghost" data-modal-open="modal-guide">Learn more</button>
+  </div>
+  <div class="card highlight">
+    <div class="card-title">For developers</div>
+    <p class="small">Build civic tools and automate workflows with the public tracker.</p>
+    <button type="button" class="btn ghost" data-modal-open="modal-guide">Learn more</button>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <div class="card-title">Community rating</div>
+    <div class="rating">
+      <span class="rating-score">4.8</span>
+      <div class="rating-stars" aria-label="Rated 4.8 out of 5">
+        ★★★★★
+      </div>
+      <span class="small">1,248 verified reports</span>
+    </div>
+    <div class="rating-bar">
+      <div class="rating-fill" style="width: 96%;"></div>
+    </div>
+    <div class="small">Satisfaction with response time and resolution quality.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Newsroom</div>
+    <div class="news-list">
+      <div class="news-item">
+        <span class="news-tag">Update</span>
+        <div>
+          <div class="news-title">Dormitory heating restored in Block B</div>
+          <div class="small">Response time improved by 22% this month.</div>
+        </div>
+      </div>
+      <div class="news-item">
+        <span class="news-tag">Project</span>
+        <div>
+          <div class="news-title">Campus lighting audit launched</div>
+          <div class="small">Tracking 18 new locations for repairs.</div>
+        </div>
+      </div>
+      <div class="news-item">
+        <span class="news-tag">Stats</span>
+        <div>
+          <div class="news-title">Average close time: 3.2 days</div>
+          <div class="small">Faster resolution on safety tickets.</div>
         </div>
       </div>
     </div>
-  {% endfor %}
-{% else %}
-  <div class="card">
-    <h2 style="margin:0 0 8px;">No tickets yet</h2>
-    <p class="small" style="margin:0 0 12px;">
-      Create your first ticket to test the form and database.
-    </p>
-    <a href="{% url 'create' %}" style="text-decoration:none;">
-      <button type="button">Create ticket</button>
-    </a>
   </div>
-{% endif %}
+</section>
+
+<div class="modal" id="modal-guide" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>How it works</h3>
+      <button type="button" class="icon-btn" data-modal-close>×</button>
+    </div>
+    <div class="modal-body">
+      <ol class="steps">
+        <li>Create a request with clear details.</li>
+        <li>Track status in the public feed.</li>
+        <li>Admins respond and close the issue.</li>
+      </ol>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn ghost" data-modal-close>Close</button>
+      <a href="{% url 'create' %}" class="btn primary">Create request</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal-ai" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>AI helper (demo)</h3>
+      <button type="button" class="icon-btn" data-modal-close>×</button>
+    </div>
+    <div class="modal-body">
+      <p class="small">Paste a short description and generate a clean request prompt.</p>
+      <textarea id="aiPrompt" rows="6" placeholder="Example: Broken light in dorm corridor, 3rd floor, for 2 days..."></textarea>
+      <div class="chip-row">
+        <button type="button" class="chip" data-target="aiPrompt" data-prompt-template="Rewrite this into a clear request for campus support, include location, impact, urgency, and desired fix.">Rewrite for request</button>
+        <button type="button" class="chip" data-target="aiPrompt" data-prompt-template="Summarize the issue in 3 bullets: What, Where, Impact.">Summarize</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn ghost" data-copy-target="aiPrompt">Copy</button>
+      <button type="button" class="btn primary" data-modal-close>Done</button>
+    </div>
+  </div>
+</div>
 {% endblock %}

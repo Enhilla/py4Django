@@ -11,7 +11,18 @@ from .serializers import TicketSerializer
 
 def index(request):
     tickets = Ticket.objects.select_related("category").all()
-    return render(request, "complaints/index.html", {"tickets": tickets})
+    stats = {
+        "total": Ticket.objects.count(),
+        "open": Ticket.objects.filter(status=Ticket.OPEN).count(),
+        "in_progress": Ticket.objects.filter(status=Ticket.IN_PROGRESS).count(),
+        "closed": Ticket.objects.filter(status=Ticket.CLOSED).count(),
+    }
+    recent = Ticket.objects.select_related("category").order_by("-created_at")[:3]
+    return render(
+        request,
+        "complaints/index.html",
+        {"tickets": tickets, "stats": stats, "recent": recent},
+    )
 
 
 def create(request):
@@ -52,4 +63,3 @@ class TicketListCreateAPI(generics.ListCreateAPIView):
 class TicketDetailAPI(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
-

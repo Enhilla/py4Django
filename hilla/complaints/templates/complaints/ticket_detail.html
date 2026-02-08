@@ -1,17 +1,29 @@
 {% extends "complaints/base.html" %}
 
 {% block content %}
-<h1>{{ ticket.subject }}</h1>
+<section class="page-head">
+  <div>
+    <h1>{{ ticket.subject }}</h1>
+    <div class="meta">
+      <span class="pill type">{{ ticket.get_type_display }}</span>
+      <span class="pill priority">{{ ticket.get_priority_display }}</span>
+      <span class="pill status {{ ticket.status }}">{{ ticket.get_status_display }}</span>
+      <span class="pill category">{{ ticket.category.name }}</span>
+    </div>
+  </div>
+  <a href="{% url 'index' %}" class="btn ghost">Back</a>
+</section>
 
-<p><b>Type:</b> {{ ticket.get_type_display }}</p>
-<p><b>Message:</b></p>
-<p>{{ ticket.message }}</p>
+<div class="card">
+  <div class="card-title">Request details</div>
+  <p class="small">From {{ ticket.name }} · {{ ticket.email }}</p>
+  <p>{{ ticket.message }}</p>
+</div>
 
 {% if ticket.answer %}
-<hr>
-<p><b>Answer:</b></p>
-<p>{{ ticket.answer }}</p>
+  <div class="card accent">
+    <div class="card-title">Admin response</div>
+    <p>{{ ticket.answer }}</p>
+  </div>
 {% endif %}
-
-<a href="{% url 'index' %}">Back</a>
 {% endblock %}

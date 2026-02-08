@@ -1,11 +1,18 @@
 {% extends "complaints/base.html" %}
 
 {% block content %}
-<h1>Create ticket</h1>
+<section class="page-head">
+  <div>
+    <h1>Create request</h1>
+    <p class="small">Be specific: location, time, and impact help resolve issues faster.</p>
+  </div>
+</section>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Submit</button>
-</form>
+<div class="card">
+  <form method="post" class="form-grid">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn primary">Submit request</button>
+  </form>
+</div>
 {% endblock %}
