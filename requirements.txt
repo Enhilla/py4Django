@@ -12,3 +12,4 @@ google-genai
 django-recaptcha
 dj-database-url
 psycopg[binary]
+Pillow

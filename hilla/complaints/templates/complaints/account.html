@@ -1,0 +1,91 @@
+{% extends "complaints/base.html" %}
+
+{% block title %}My Account{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>My account</h1>
+    <p class="small">Welcome, {{ request.user.username }}.</p>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <div class="card-title">Profile</div>
+    <div class="profile-row">
+      <div class="avatar">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="Avatar">
+        {% else %}
+          <span>{{ request.user.username|first|upper }}</span>
+        {% endif %}
+      </div>
+      <div>
+        <div class="news-title">{{ request.user.username }}</div>
+        <div class="small">Joined: {{ request.user.date_joined|date:"Y-m-d" }}</div>
+      </div>
+    </div>
+    <form method="post" action="{% url 'upload_avatar' %}" enctype="multipart/form-data" class="form-grid">
+      {% csrf_token %}
+      {{ avatar_form.as_p }}
+      <button type="submit" class="btn ghost">Upload avatar</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title">My stats</div>
+    <div class="stat-grid">
+      <div class="stat">
+        <span class="stat-label">My tickets</span>
+        <span class="stat-value">{{ tickets|length }}</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">Avg rating</span>
+        <span class="stat-value">
+          {% if avg_rating %}
+            {{ avg_rating|floatformat:1 }}
+          {% else %}
+            -
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="rating-stars big">
+      {% if avg_rating and rating_count|default:0 >= 3 %}
+        {% with rounded=avg_rating|floatformat:0 %}
+          {% if rounded == "5" %}★★★★★{% elif rounded == "4" %}★★★★☆{% elif rounded == "3" %}★★★☆☆{% elif rounded == "2" %}★★☆☆☆{% elif rounded == "1" %}★☆☆☆☆{% else %}☆☆☆☆☆{% endif %}
+        {% endwith %}
+        <span class="small">Based on {{ rating_count }} ratings</span>
+      {% else %}
+        <span class="small">Not enough ratings yet.</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">My tickets</div>
+    {% if tickets %}
+      {% for t in tickets %}
+        <div class="ticket-row">
+          <div>
+            <div class="ticket-title">
+              <a href="{% url 'ticket_detail' t.id %}">{{ t.subject }}</a>
+            </div>
+            <div class="meta">
+              <span class="pill status {{ t.status }}">{{ t.get_status_display }}</span>
+              <span class="pill priority">{{ t.get_priority_display }}</span>
+              <span class="pill category">{{ t.category.name }}</span>
+            </div>
+            <div class="small">Created: {{ t.created_at|date:"Y-m-d H:i" }}</div>
+          </div>
+          <a class="arrow" href="{% url 'ticket_detail' t.id %}">Open →</a>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="small">No tickets yet.</p>
+      <a href="{% url 'create' %}" class="btn primary">Create request</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

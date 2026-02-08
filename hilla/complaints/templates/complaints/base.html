@@ -26,7 +26,19 @@
               <a href="{% url 'seed_demo' %}">Seed demo</a>
             {% endif %}
             {% if request.user.is_authenticated %}
-              <a href="{% url 'logout' %}">Logout</a>
+              <div class="user-menu">
+                <button type="button" class="user-avatar" data-user-menu>
+                  {% if request.user.profile.avatar %}
+                    <img src="{{ request.user.profile.avatar.url }}" alt="Avatar">
+                  {% else %}
+                    <span>{{ request.user.username|first|upper }}</span>
+                  {% endif %}
+                </button>
+                <div class="user-dropdown" hidden>
+                  <a href="{% url 'account' %}">My account</a>
+                  <a href="{% url 'logout' %}">Logout</a>
+                </div>
+              </div>
             {% else %}
               <a href="{% url 'login' %}">Login</a>
               <a href="{% url 'signup' %}">Sign up</a>
@@ -119,6 +131,8 @@
       const aiBtn = e.target.closest("[data-ai-action]");
       const overlay = e.target.classList.contains("modal") ? e.target : null;
       const aiBackdrop = e.target.id === "ai-backdrop" ? e.target : null;
+      const userMenuBtn = e.target.closest("[data-user-menu]");
+      const userMenu = userMenuBtn ? userMenuBtn.closest(".user-menu") : null;
 
       if (trigger) {
         const id = trigger.getAttribute("data-modal-open");
@@ -150,6 +164,15 @@
         const popover = document.getElementById("modal-ai");
         closeLayer(popover);
         closeLayer(aiBackdrop);
+      }
+
+      if (userMenuBtn && userMenu) {
+        const dropdown = userMenu.querySelector(".user-dropdown");
+        if (dropdown) {
+          dropdown.toggleAttribute("hidden");
+        }
+      } else {
+        document.querySelectorAll(".user-dropdown:not([hidden])").forEach((d) => d.setAttribute("hidden", "hidden"));
       }
 
       if (copyBtn) {

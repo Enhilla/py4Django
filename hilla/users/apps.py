@@ -6,5 +6,6 @@ class UsersConfig(AppConfig):
 
     def ready(self):
         from .bootstrap import ensure_default_admin
+        from . import signals  # noqa: F401
 
         ensure_default_admin()

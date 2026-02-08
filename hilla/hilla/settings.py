@@ -157,6 +157,12 @@ STORAGES = {
 WHITENOISE_USE_FINDERS = True
 
 # --------------------
+# MEDIA FILES (avatars)
+# --------------------
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# --------------------
 # DEFAULT PK
 # --------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -12,7 +12,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.management import call_command
 
 from .models import Ticket, Category
-from .forms import TicketForm, TicketRatingForm, AdminCreateForm
+from .forms import TicketForm, TicketRatingForm, AdminCreateForm, AvatarForm
+from users.models import Profile
 
 # DRF
 from rest_framework import generics
@@ -172,6 +173,49 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, "registration/signup.html", {"form": form})
+
+
+@login_required
+def account(request):
+    tickets = (
+        Ticket.objects.filter(user=request.user)
+        .select_related("category")
+        .order_by("-created_at")
+    )
+    avg_rating = Ticket.objects.filter(user=request.user).aggregate(
+        avg=Avg("ratings__score")
+    )["avg"]
+    rating_count = Ticket.objects.filter(user=request.user).aggregate(
+        cnt=Count("ratings")
+    )["cnt"]
+    avatar_form = AvatarForm()
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    return render(
+        request,
+        "complaints/account.html",
+        {
+            "tickets": tickets,
+            "avg_rating": avg_rating,
+            "rating_count": rating_count,
+            "avatar_form": avatar_form,
+            "profile": profile,
+        },
+    )
+
+
+@login_required
+def upload_avatar(request):
+    if request.method != "POST":
+        return redirect("account")
+    form = AvatarForm(request.POST, request.FILES)
+    if form.is_valid():
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        profile.avatar = form.cleaned_data["avatar"]
+        profile.save()
+        messages.success(request, "Avatar updated.")
+    else:
+        messages.error(request, "Invalid image.")
+    return redirect("account")
 
 
 # ==========================

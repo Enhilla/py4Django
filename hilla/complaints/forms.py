@@ -82,3 +82,7 @@ class AdminCreateForm(forms.Form):
         if cleaned.get("password1") != cleaned.get("password2"):
             self.add_error("password2", "Passwords do not match.")
         return cleaned
+
+
+class AvatarForm(forms.Form):
+    avatar = forms.ImageField(required=True)

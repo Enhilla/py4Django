@@ -10,6 +10,8 @@ urlpatterns = [
     path("create-admin/", views.create_admin, name="create_admin"),
     path("seed-demo/", views.seed_demo_view, name="seed_demo"),
     path("signup/", views.signup, name="signup"),
+    path("account/", views.account, name="account"),
+    path("account/avatar/", views.upload_avatar, name="upload_avatar"),
 
     # REST API
     path("api/tickets/", views.TicketListCreateAPI.as_view(), name="api_tickets"),
