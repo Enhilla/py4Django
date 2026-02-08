@@ -37,6 +37,7 @@
 </main>
 
 <footer class="site-footer">
+  <div class="footer-rule"></div>
   <div class="container footer-grid">
     <div>
       <div class="footer-brand">FixMyCampus</div>
@@ -44,9 +45,17 @@
     </div>
     <div>
       <div class="footer-title">Social</div>
-      <div class="footer-links">
-        <a href="https://github.com/Enhilla" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://www.instagram.com/enhillahgel/" target="_blank" rel="noopener">Instagram</a>
+      <div class="footer-icons">
+        <a class="icon-link" href="https://github.com/Enhilla" target="_blank" rel="noopener" aria-label="GitHub">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.2.8-.6v-2.1c-3.3.7-4-1.6-4-1.6-.5-1.3-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.9 1.2 1.9 1.2 1.1 1.9 2.9 1.4 3.6 1.1.1-.8.4-1.4.7-1.7-2.6-.3-5.3-1.3-5.3-5.7 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.5.1-3.1 0 0 .9-.3 3.1 1.1a10.7 10.7 0 0 1 5.6 0c2.2-1.4 3.1-1.1 3.1-1.1.6 1.6.2 2.8.1 3.1.7.8 1.1 1.8 1.1 3 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.3v3.4c0 .4.2.7.8.6A12 12 0 0 0 12 .5Z"/>
+          </svg>
+        </a>
+        <a class="icon-link" href="https://www.instagram.com/enhillahgel/" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm10 2H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm-5 3.5A5.5 5.5 0 1 1 6.5 14 5.5 5.5 0 0 1 12 8.5Zm0 2A3.5 3.5 0 1 0 15.5 14 3.5 3.5 0 0 0 12 10.5Zm6-3.4a1.1 1.1 0 1 1-1.1 1.1A1.1 1.1 0 0 1 18 7.1Z"/>
+          </svg>
+        </a>
       </div>
     </div>
     <div>
@@ -57,6 +66,7 @@
       </div>
     </div>
   </div>
+  <div class="footer-bottom"></div>
 </footer>
 
 <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
@@ -71,16 +81,22 @@
       setTimeout(() => toast.classList.remove("show"), 2400);
     };
 
-    const openModal = (modal) => {
-      if (!modal) return;
-      modal.classList.add("open");
-      document.body.classList.add("modal-open");
+    const openLayer = (el) => {
+      if (!el) return;
+      el.removeAttribute("hidden");
+      el.classList.add("open");
+      if (el.classList.contains("modal")) {
+        document.body.classList.add("modal-open");
+      }
     };
 
-    const closeModal = (modal, withToast = false) => {
-      if (!modal) return;
-      modal.classList.remove("open");
-      document.body.classList.remove("modal-open");
+    const closeLayer = (el, withToast = false) => {
+      if (!el) return;
+      el.classList.remove("open");
+      el.setAttribute("hidden", "hidden");
+      if (el.classList.contains("modal")) {
+        document.body.classList.remove("modal-open");
+      }
       if (withToast) showToast("Closed");
     };
 
@@ -88,21 +104,28 @@
       const trigger = e.target.closest("[data-modal-open]");
       const closeBtn = e.target.closest("[data-modal-close]");
       const copyBtn = e.target.closest("[data-copy-target]");
+      const popoverClose = e.target.closest("[data-popover-close]");
+      const aiBtn = e.target.closest("[data-ai-action]");
       const overlay = e.target.classList.contains("modal") ? e.target : null;
 
       if (trigger) {
         const id = trigger.getAttribute("data-modal-open");
         const modal = document.getElementById(id);
-        openModal(modal);
+        openLayer(modal);
       }
 
       if (closeBtn) {
         const modal = closeBtn.closest(".modal");
-        closeModal(modal, true);
+        closeLayer(modal, true);
       }
 
       if (overlay) {
-        closeModal(overlay);
+        closeLayer(overlay);
+      }
+
+      if (popoverClose) {
+        const popover = popoverClose.closest(".ai-popover");
+        closeLayer(popover);
       }
 
       if (copyBtn) {
@@ -112,12 +135,45 @@
           navigator.clipboard.writeText(target.value).then(() => showToast("Copied to clipboard."));
         }
       }
+
+      if (aiBtn) {
+        const mode = aiBtn.getAttribute("data-ai-action");
+        const targetId = aiBtn.getAttribute("data-ai-target");
+        const target = targetId ? document.getElementById(targetId) : null;
+        if (!target || !target.value.trim()) {
+          showToast("Add a short description first.");
+          return;
+        }
+        showToast("Generating...");
+        fetch("{% url 'api_ai_generate' %}", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": (function () {
+              const match = document.cookie.match(/csrftoken=([^;]+)/);
+              return match ? match[1] : "";
+            })()
+          },
+          body: JSON.stringify({ mode, text: target.value })
+        })
+          .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+          .then(({ ok, data }) => {
+            if (!ok) {
+              showToast(data.user_message || data.error || "AI error");
+              return;
+            }
+            target.value = data.text || "";
+            showToast("Done.");
+          })
+          .catch(() => showToast("Network error"));
+      }
     });
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        document.querySelectorAll(".modal.open").forEach((m) => closeModal(m));
-        document.body.classList.remove("modal-open");
+        document.querySelectorAll(".modal.open").forEach((m) => closeLayer(m));
+        document.querySelectorAll(".ai-popover.open").forEach((p) => closeLayer(p));
       }
     });
 

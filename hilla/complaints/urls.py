@@ -9,4 +9,5 @@ urlpatterns = [
     # REST API
     path("api/tickets/", views.TicketListCreateAPI.as_view(), name="api_tickets"),
     path("api/tickets/<int:pk>/", views.TicketDetailAPI.as_view(), name="api_ticket_detail"),
+    path("api/ai/generate/", views.ai_generate, name="api_ai_generate"),
 ]

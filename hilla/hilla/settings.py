@@ -5,10 +5,18 @@ Django settings for hilla project.
 from pathlib import Path
 import os
 
+try:
+    from dotenv import load_dotenv
+except Exception:
+    load_dotenv = None
+
 # --------------------
 # BASE DIR
 # --------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+if load_dotenv:
+    load_dotenv(BASE_DIR.parent / ".env")
 
 # --------------------
 # SECURITY

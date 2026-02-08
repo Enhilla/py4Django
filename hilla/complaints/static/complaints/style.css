@@ -126,6 +126,9 @@ body.theme {
   margin: 16px 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
 }
+.prompt-helper {
+  position: relative;
+}
 
 .card.glass {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
@@ -140,6 +143,14 @@ body.theme {
   font-weight: 700;
   margin-bottom: 8px;
   font-size: 16px;
+}
+
+.card.highlight .card-title {
+  font-size: 18px;
+}
+
+.card.highlight .small {
+  color: rgba(15, 22, 26, 0.78);
 }
 
 .stat-grid {
@@ -213,8 +224,35 @@ body.theme {
 }
 
 .card.highlight {
-  background: linear-gradient(160deg, rgba(245, 199, 106, 0.18), rgba(255, 255, 255, 0.04));
-  border-color: rgba(245, 199, 106, 0.35);
+  background: linear-gradient(160deg, rgba(245, 199, 106, 0.26), rgba(255, 255, 255, 0.04));
+  border-color: rgba(245, 199, 106, 0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+.card.highlight::after {
+  content: "";
+  position: absolute;
+  inset: -40% 30% auto auto;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(245, 199, 106, 0.28), transparent 70%);
+  pointer-events: none;
+}
+
+.card.highlight.promo::before {
+  content: "Featured";
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(12, 22, 26, 0.85);
+  color: #f5c76a;
+  border: 1px solid rgba(245, 199, 106, 0.4);
 }
 
 .rating {
@@ -410,6 +448,16 @@ button.primary {
   color: #ffffff;
 }
 
+.card.highlight .btn.ghost {
+  background: rgba(15, 22, 26, 0.9);
+  color: #f5c76a;
+  border-color: rgba(15, 22, 26, 0.8);
+}
+
+.card.highlight .btn.ghost:hover {
+  color: #ffffff;
+}
+
 .chip {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -479,6 +527,10 @@ button.primary {
   transition: opacity 0.25s ease;
   z-index: 7;
 }
+.modal.modal-ai {
+  place-items: start center;
+  padding-top: 90px;
+}
 .modal.open {
   opacity: 1;
   pointer-events: auto;
@@ -516,6 +568,37 @@ button.primary {
   gap: 10px;
   justify-content: flex-end;
   margin-top: 14px;
+}
+
+.ai-popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: min(520px, 92vw);
+  background: rgba(12, 22, 26, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.32);
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  pointer-events: none;
+  transition: all 0.25s ease;
+  z-index: 4;
+}
+
+.ai-popover.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+@media (max-width: 900px) {
+  .ai-popover {
+    position: static;
+    width: 100%;
+    margin-top: 12px;
+  }
 }
 
 body.modal-open {
@@ -560,6 +643,14 @@ body.modal-open {
   margin-top: 28px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(6, 12, 16, 0.7);
+  position: relative;
+}
+
+.footer-rule {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  width: min(1100px, 92vw);
+  margin: 0 auto;
 }
 
 .footer-grid {
@@ -596,6 +687,46 @@ body.modal-open {
 
 .footer-links a:hover {
   color: #ffffff;
+}
+
+.footer-icons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  align-self: end;
+}
+
+.icon-link {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.icon-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.3);
+}
+
+.icon-link svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  display: block;
+}
+
+.footer-bottom {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  width: 100%;
 }
 
 @media (max-width: 700px) {
