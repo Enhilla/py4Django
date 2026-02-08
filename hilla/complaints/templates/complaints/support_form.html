@@ -12,7 +12,26 @@
   <form method="post" class="form-grid">
       {% csrf_token %}
       {{ form.as_p }}
+      <p class="small">If you select anonymous, your name and email will be hidden.</p>
       <button type="submit" class="btn primary">Submit request</button>
   </form>
 </div>
+
+<script>
+  (function () {
+    const anon = document.getElementById("id_is_anonymous");
+    const nameRow = document.getElementById("id_name")?.closest("p");
+    const emailRow = document.getElementById("id_email")?.closest("p");
+    const toggle = () => {
+      if (!anon) return;
+      const hide = anon.checked;
+      if (nameRow) nameRow.style.display = hide ? "none" : "";
+      if (emailRow) emailRow.style.display = hide ? "none" : "";
+    };
+    if (anon) {
+      anon.addEventListener("change", toggle);
+      toggle();
+    }
+  })();
+</script>
 {% endblock %}

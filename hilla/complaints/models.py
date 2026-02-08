@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
 
 
@@ -75,8 +76,9 @@ class Ticket(models.Model):
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default=MEDIUM)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=OPEN)
 
-    name = models.CharField(max_length=120)
-    email = models.EmailField()
+    name = models.CharField(max_length=120, blank=True)
+    email = models.EmailField(blank=True)
+    is_anonymous = models.BooleanField(default=False)
     subject = models.CharField(max_length=200)
     message = models.TextField()
 
@@ -105,3 +107,19 @@ class TicketComment(models.Model):
 
     def __str__(self):
         return f"Comment #{self.id} for Ticket #{self.ticket_id}"
+
+
+class TicketRating(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="ratings")
+    score = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    rater_name = models.CharField(max_length=120, blank=True)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Rating {self.score} for Ticket #{self.ticket_id}"

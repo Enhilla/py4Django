@@ -1,0 +1,20 @@
+{% extends "complaints/base.html" %}
+
+{% block title %}Create Admin{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Create admin</h1>
+    <p class="small">Only superusers can create new admins.</p>
+  </div>
+</section>
+
+<div class="card">
+  <form method="post" class="form-grid">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn primary">Create admin</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,13 +1,16 @@
 import json
 import os
 
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Count, Avg
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
 
 from .models import Ticket, Category
-from .forms import TicketForm
+from .forms import TicketForm, TicketRatingForm, AdminCreateForm
 
 # DRF
 from rest_framework import generics
@@ -37,6 +40,9 @@ def create(request):
             ticket = form.save(commit=False)
             if request.user.is_authenticated:
                 ticket.user = request.user
+            if ticket.is_anonymous:
+                ticket.name = ""
+                ticket.email = ""
             ticket.save()
             messages.success(request, "Ticket created successfully!")
             return redirect("ticket_detail", pk=ticket.pk)
@@ -48,12 +54,96 @@ def create(request):
 
 def ticket_detail(request, pk: int):
     ticket = get_object_or_404(Ticket.objects.select_related("category"), pk=pk)
+    rating_form = TicketRatingForm()
+    ratings = ticket.ratings.all()
+    avg_rating = ratings.aggregate(avg=Avg("score"))["avg"]
     comments = ticket.comments.all()
     return render(
         request,
         "complaints/ticket_detail.html",
-        {"ticket": ticket, "comments": comments},
+        {
+            "ticket": ticket,
+            "comments": comments,
+            "ratings": ratings,
+            "avg_rating": avg_rating,
+            "rating_form": rating_form,
+        },
     )
+
+
+def rate_ticket(request, pk: int):
+    ticket = get_object_or_404(Ticket, pk=pk)
+    if request.method != "POST":
+        return redirect("ticket_detail", pk=pk)
+    form = TicketRatingForm(request.POST)
+    if form.is_valid():
+        rating = form.save(commit=False)
+        rating.ticket = ticket
+        rating.save()
+        messages.success(request, "Thanks for your rating!")
+    else:
+        messages.error(request, "Please fix the rating form.")
+    return redirect("ticket_detail", pk=pk)
+
+
+def dashboard(request):
+    status_counts = (
+        Ticket.objects.values("status")
+        .annotate(count=Count("id"))
+        .order_by()
+    )
+    priority_counts = (
+        Ticket.objects.values("priority")
+        .annotate(count=Count("id"))
+        .order_by()
+    )
+    category_counts = (
+        Category.objects.annotate(count=Count("tickets"))
+        .values("name", "count")
+        .order_by("-count")[:5]
+    )
+    avg_rating = Ticket.objects.aggregate(avg=Avg("ratings__score"))["avg"]
+
+    leaderboard = (
+        Ticket.objects.filter(is_anonymous=False)
+        .values("name")
+        .annotate(total=Count("id"), avg=Avg("ratings__score"))
+        .order_by("-total")[:5]
+    )
+
+    return render(
+        request,
+        "complaints/dashboard.html",
+        {
+            "status_counts": status_counts,
+            "priority_counts": priority_counts,
+            "category_counts": category_counts,
+            "avg_rating": avg_rating,
+            "leaderboard": leaderboard,
+        },
+    )
+
+
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
+def create_admin(request):
+    if request.method == "POST":
+        form = AdminCreateForm(request.POST)
+        if form.is_valid():
+            User = get_user_model()
+            user = User.objects.create_user(
+                username=form.cleaned_data["username"],
+                email=form.cleaned_data.get("email", ""),
+                password=form.cleaned_data["password1"],
+            )
+            user.is_staff = True
+            user.is_superuser = True
+            user.save()
+            messages.success(request, "Admin created.")
+            return redirect("create_admin")
+    else:
+        form = AdminCreateForm()
+    return render(request, "complaints/create_admin.html", {"form": form})
 
 
 # ==========================

@@ -1,0 +1,100 @@
+{% extends "complaints/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="small">Live overview of complaints, ratings, and activity.</p>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <div class="card-title">Status overview</div>
+    {% for row in status_counts %}
+      <div class="news-item">
+        <span class="news-tag">{{ row.status|title }}</span>
+        <div class="news-title">{{ row.count }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="card-title">Priority overview</div>
+    {% for row in priority_counts %}
+      <div class="news-item">
+        <span class="news-tag">{{ row.priority|title }}</span>
+        <div class="news-title">{{ row.count }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <div class="card-title">Top categories</div>
+    {% for row in category_counts %}
+      <div class="news-item">
+        <span class="news-tag">{{ row.name }}</span>
+        <div class="news-title">{{ row.count }}</div>
+      </div>
+    {% empty %}
+      <p class="small">No categories yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <div class="card-title">Community rating</div>
+    {% if avg_rating %}
+      <div class="rating">
+        <span class="rating-score">{{ avg_rating|floatformat:1 }}</span>
+        <div class="rating-stars">★★★★★</div>
+        <span class="small">Average rating</span>
+      </div>
+      <div class="rating-bar">
+        <div class="rating-fill" style="width: {{ avg_rating|floatformat:0 }}0%;"></div>
+      </div>
+    {% else %}
+      <p class="small">No ratings yet.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <div class="card-title">Leaderboard</div>
+    {% for row in leaderboard %}
+      <div class="news-item">
+        <span class="news-tag">{{ row.total }}</span>
+        <div>
+          <div class="news-title">{{ row.name }}</div>
+          <div class="small">Avg rating: {{ row.avg|default:"-" }}</div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="small">No reporters yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="card highlight promo">
+    <div class="card-title">Gamification</div>
+    <p class="small">Top reporters unlock badges based on activity and ratings.</p>
+    <div class="news-list">
+      <div class="news-item">
+        <span class="news-tag">MVP</span>
+        <div class="news-title">Most reports this week</div>
+      </div>
+      <div class="news-item">
+        <span class="news-tag">Helper</span>
+        <div class="news-title">Highest average rating</div>
+      </div>
+      <div class="news-item">
+        <span class="news-tag">Streak</span>
+        <div class="news-title">3 weeks active</div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -101,7 +101,7 @@
               <span class="pill category">{{ t.category.name }}</span>
             </div>
             <div class="small">
-              From {{ t.name }} · {{ t.created_at|date:"Y-m-d H:i" }}
+              From {% if t.is_anonymous %}Anonymous{% else %}{{ t.name }}{% endif %} · {{ t.created_at|date:"Y-m-d H:i" }}
             </div>
           </div>
           <a class="arrow" href="{% url 'ticket_detail' t.id %}">Open →</a>

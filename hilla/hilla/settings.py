@@ -35,6 +35,17 @@ ALLOWED_HOSTS = [
 ]
 
 # --------------------
+# RECAPTCHA
+# --------------------
+RECAPTCHA_PUBLIC_KEY = os.environ.get("RECAPTCHA_PUBLIC_KEY", "")
+RECAPTCHA_PRIVATE_KEY = os.environ.get("RECAPTCHA_PRIVATE_KEY", "")
+ENABLE_RECAPTCHA = (
+    os.environ.get("ENABLE_RECAPTCHA", "true").strip().lower() == "true"
+    and bool(RECAPTCHA_PUBLIC_KEY)
+    and bool(RECAPTCHA_PRIVATE_KEY)
+)
+
+# --------------------
 # APPLICATIONS
 # --------------------
 INSTALLED_APPS = [
@@ -52,6 +63,9 @@ INSTALLED_APPS = [
     "complaints",
     "users.apps.UsersConfig",
 ]
+
+if ENABLE_RECAPTCHA:
+    INSTALLED_APPS.append("django_recaptcha")
 
 # --------------------
 # MIDDLEWARE
